@@ -1,0 +1,28 @@
+[project]
+name = "auto-idea-combiner-backend"
+version = "0.1.0"
+description = "FastAPI backend for Auto Idea Combiner"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic",
+    "chromadb",
+    "fastapi",
+    "feedparser",
+    "google-generativeai",
+    "httpx",
+    "janome",
+    "keybert",
+    "openai",
+    "pydantic-settings",
+    "python-dotenv",
+    "sentence-transformers",
+    "sqlmodel",
+    "uvicorn",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false

@@ -1,0 +1,18 @@
+[package]
+name = "auto-idea-combiner"
+version = "0.1.0"
+description = "Auto Idea Combiner desktop app"
+edition = "2021"
+build = "build.rs"
+
+[lib]
+name = "auto_idea_combiner_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
