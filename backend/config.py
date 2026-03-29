@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,7 +32,8 @@ class Settings(BaseSettings):
 
     backend_port: int = Field(default=8765, alias="BACKEND_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    local_scan_dirs: list[str] = Field(default_factory=list, alias="LOCAL_SCAN_DIRS")
+    # str型で受けてプロパティでlist変換 (pydantic-settings v2はlist[str]をJSONパースするため)
+    local_scan_dirs_raw: str = Field(default="", alias="LOCAL_SCAN_DIRS")
     clipboard_watch: bool = Field(default=True, alias="CLIPBOARD_WATCH")
     external_api_enabled: bool = Field(default=True, alias="EXTERNAL_API_ENABLED")
     chroma_persist_dir: str = Field(default="./chroma_data", alias="CHROMA_PERSIST_DIR")
@@ -46,16 +47,11 @@ class Settings(BaseSettings):
     fun: float = Field(default=0.16, alias="SCORE_WEIGHT_FUN")
     api_fit: float = Field(default=0.10, alias="SCORE_WEIGHT_API_FIT")
 
-    @field_validator("local_scan_dirs", mode="before")
-    @classmethod
-    def _parse_local_scan_dirs(cls, value: object) -> list[str]:
-        if value is None or value == "":
+    @property
+    def local_scan_dirs(self) -> list[str]:
+        if not self.local_scan_dirs_raw:
             return []
-        if isinstance(value, str):
-            return [part.strip() for part in value.split(",") if part.strip()]
-        if isinstance(value, list):
-            return [str(part).strip() for part in value if str(part).strip()]
-        raise TypeError("LOCAL_SCAN_DIRS must be a comma-separated string or list")
+        return [p.strip() for p in self.local_scan_dirs_raw.split(",") if p.strip()]
 
     @property
     def resolved_chroma_persist_dir(self) -> Path:

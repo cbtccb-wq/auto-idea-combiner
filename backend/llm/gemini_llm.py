@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from backend.llm.base import BaseLLM
 
 
 class GeminiLLM(BaseLLM):
-    def __init__(self, api_key: str, model: str = "gemini-1.5-flash") -> None:
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel(model)
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash") -> None:
+        self._client = genai.Client(api_key=api_key)
+        self._model = model
 
     def generate(self, prompt: str) -> str:
-        response = self.model.generate_content(prompt)
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.9),
+        )
         return str(getattr(response, "text", "") or "").strip()
