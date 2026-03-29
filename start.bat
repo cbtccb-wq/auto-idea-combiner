@@ -6,6 +6,7 @@ set "ROOT=%~dp0"
 set "BACKEND=%ROOT%backend"
 set "FRONTEND=%ROOT%frontend"
 set "BACKEND_PORT=8765"
+set "FRONTEND_PORT=1420"
 
 echo.
 echo  =============================================
@@ -53,7 +54,7 @@ curl -s "http://localhost:%BACKEND_PORT%/api/health" >nul 2>&1
 if %errorlevel% equ 0 goto BACKEND_READY
 set /a RETRY+=1
 if %RETRY% geq 15 (
-    echo [ERROR] Backend startup timed out. Check backend.log
+    echo [ERROR] Backend startup timed out.
     pause
     exit /b 1
 )
@@ -62,7 +63,7 @@ goto WAIT_LOOP
 :BACKEND_READY
 echo        Backend ready!
 
-:: Start frontend
+:: Start frontend (pnpm dev = browser mode, fast)
 echo [3/3] Starting frontend...
 cd /d "%FRONTEND%"
 
@@ -71,20 +72,30 @@ if not exist "node_modules" (
     pnpm install
 )
 
-if exist "src-tauri\target\release\auto-idea-combiner.exe" (
-    start "" "src-tauri\target\release\auto-idea-combiner.exe"
-) else (
-    echo        Running in dev mode (first run compiles Rust, takes a few minutes)...
-    start "AIC-Frontend" cmd /c "pnpm tauri dev"
-)
+start "AIC-Frontend" /min cmd /c "pnpm dev"
+
+:: Wait for frontend then open browser
+echo        Waiting for frontend...
+set /a FRETRY=0
+:FWAIT_LOOP
+timeout /t 2 /nobreak >nul
+curl -s "http://localhost:%FRONTEND_PORT%" >nul 2>&1
+if %errorlevel% equ 0 goto FRONTEND_READY
+set /a FRETRY+=1
+if %FRETRY% geq 20 goto FRONTEND_READY
+goto FWAIT_LOOP
+
+:FRONTEND_READY
+echo        Opening browser...
+start "" "http://localhost:%FRONTEND_PORT%"
 
 echo.
 echo  =============================================
 echo   Started!
 echo   Backend:  http://localhost:%BACKEND_PORT%
-echo   Frontend: http://localhost:1420
+echo   Frontend: http://localhost:%FRONTEND_PORT%
 echo  =============================================
 echo.
-echo  Close this window to stop the backend.
+echo  Keep this window open. Close it to stop.
 echo.
 pause
