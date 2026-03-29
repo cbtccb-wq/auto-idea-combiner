@@ -40,52 +40,51 @@ if not exist "%ROOT%.env" (
     notepad "%ROOT%.env"
 )
 
-:: Start backend
+:: [1/3] Start backend
 echo [1/3] Starting Python backend (port %BACKEND_PORT%)...
 cd /d "%BACKEND%"
-start "AIC-Backend" /min cmd /c "uv run uvicorn main:app --port %BACKEND_PORT%"
+start "AIC-Backend" cmd /c "uv run uvicorn main:app --port %BACKEND_PORT%"
 
-:: Wait for backend
-echo [2/3] Waiting for backend...
+:: Wait for backend health check
+echo [2/3] Waiting for backend (max 30s)...
 set /a RETRY=0
 :WAIT_LOOP
 timeout /t 2 /nobreak >nul
-curl -s "http://localhost:%BACKEND_PORT%/api/health" >nul 2>&1
+curl -s "http://localhost:%BACKEND_PORT%/api/health" 2>nul | findstr "ok" >nul
 if %errorlevel% equ 0 goto BACKEND_READY
 set /a RETRY+=1
 if %RETRY% geq 15 (
     echo [ERROR] Backend startup timed out.
+    echo         Check the AIC-Backend window for errors.
     pause
     exit /b 1
 )
+echo        Still waiting... (%RETRY%/15)
 goto WAIT_LOOP
 
 :BACKEND_READY
 echo        Backend ready!
 
-:: Start frontend (pnpm dev = browser mode, fast)
+:: [3/3] Start frontend
 echo [3/3] Starting frontend...
 cd /d "%FRONTEND%"
 
 if not exist "node_modules" (
-    echo        Installing dependencies (first time only)...
-    pnpm install
+    echo        Installing node_modules (first time, takes 1-2 min)...
+    call pnpm install
+    if %errorlevel% neq 0 (
+        echo [ERROR] pnpm install failed.
+        pause
+        exit /b 1
+    )
 )
 
-start "AIC-Frontend" /min cmd /c "pnpm dev"
+start "AIC-Frontend" cmd /c "pnpm dev"
 
-:: Wait for frontend then open browser
-echo        Waiting for frontend...
-set /a FRETRY=0
-:FWAIT_LOOP
-timeout /t 2 /nobreak >nul
-curl -s "http://localhost:%FRONTEND_PORT%" >nul 2>&1
-if %errorlevel% equ 0 goto FRONTEND_READY
-set /a FRETRY+=1
-if %FRETRY% geq 20 goto FRONTEND_READY
-goto FWAIT_LOOP
+:: Wait 8 seconds then open browser
+echo        Waiting for frontend to start...
+timeout /t 8 /nobreak >nul
 
-:FRONTEND_READY
 echo        Opening browser...
 start "" "http://localhost:%FRONTEND_PORT%"
 
@@ -96,6 +95,6 @@ echo   Backend:  http://localhost:%BACKEND_PORT%
 echo   Frontend: http://localhost:%FRONTEND_PORT%
 echo  =============================================
 echo.
-echo  Keep this window open. Close it to stop.
+echo  Keep this window open (or close it - processes run independently).
 echo.
 pause
