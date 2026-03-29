@@ -18,7 +18,9 @@ def select_combinations(
         if not concept_a_text or embedding_a is None:
             continue
 
-        for concept_b in concepts[index + 1 :]:
+        for concept_b in concepts[index + 1:]:
+            if concept_a_text == str(concept_b.get("concept") or concept_b.get("text") or "").strip():
+                continue
             embedding_b = concept_b.get("embedding")
             concept_b_text = str(concept_b.get("concept") or concept_b.get("text") or "").strip()
             if not concept_b_text or embedding_b is None:
