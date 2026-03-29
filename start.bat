@@ -81,10 +81,21 @@ if not exist "node_modules" (
 
 start "AIC-Frontend" cmd /c "pnpm dev"
 
-:: Wait 8 seconds then open browser
+:: Wait for frontend to be ready (up to 60 seconds)
 echo        Waiting for frontend to start...
-timeout /t 8 /nobreak >nul
+set /a FRETRY=0
+:FRONT_WAIT
+timeout /t 2 /nobreak >nul
+curl -s "http://localhost:%FRONTEND_PORT%" >nul 2>&1
+if %errorlevel% equ 0 goto FRONT_READY
+set /a FRETRY+=1
+if %FRETRY% geq 30 (
+    echo        Frontend check timed out, opening anyway...
+    goto FRONT_READY
+)
+goto FRONT_WAIT
 
+:FRONT_READY
 echo        Opening browser...
 start "" "http://localhost:%FRONTEND_PORT%"
 
