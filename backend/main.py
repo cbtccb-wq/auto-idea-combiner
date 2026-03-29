@@ -178,9 +178,9 @@ def _build_user_context(session: Session) -> str:
         select(Concept).order_by(desc(Concept.frequency), desc(Concept.created_at)).limit(8)
     ).all()
     if not recent_concepts:
-        return "No strong user context is available yet. Bias toward broadly useful ideas."
+        return "ユーザー文脈はまだありません。幅広く使える汎用的なアイデアを優先してください。"
     joined = ", ".join(concept.text for concept in recent_concepts)
-    return f"Recent interest topics: {joined}"
+    return f"最近の関心トピック: {joined}"
 
 
 def _fallback_idea(
@@ -190,30 +190,31 @@ def _fallback_idea(
     detail_level: str,
 ) -> dict[str, str]:
     detail_suffix = {
-        "brief": "Keep the first version minimal.",
-        "deep": "Add a bit more product and workflow detail.",
-    }.get(detail_level, "Keep the scope small enough to validate quickly.")
+        "brief": "まずは最小構成で試せる形にする。",
+        "deep": "プロダクトとワークフローの詳細まで踏み込む。",
+    }.get(detail_level, "素早く検証できる小さいスコープに収める。")
+    distance_label = {"near": "近い", "mid": "中程度の", "far": "遠い"}.get(distance_category, distance_category)
     return {
-        "title": f"{concept_a} x {concept_b} Lab",
+        "title": f"{concept_a} × {concept_b} ラボ",
         "summary": (
-            f"A lightweight desktop concept that blends {concept_a} with {concept_b} "
-            f"to support everyday decisions. {detail_suffix}"
+            f"{concept_a} と {concept_b} を組み合わせた軽量デスクトップコンセプト。"
+            f"日常の意思決定をサポートします。{detail_suffix}"
         ),
         "why_interesting": (
-            f"The {distance_category} combination gives it a clearer point of view than a standard category tool."
+            f"{distance_label}距離の組み合わせにより、既存ツールにない独自の視点が生まれます。"
         ),
         "target_user": (
-            f"Individuals who care about {concept_a} and want to apply {concept_b} in work or hobbies."
+            f"{concept_a} に関心を持ち、{concept_b} を仕事や趣味に活かしたい人。"
         ),
-        "main_tech": "FastAPI API, local search API, LLM API, Tauri desktop UI",
+        "main_tech": "FastAPI バックエンド、ローカル検索 API、LLM API、Tauri デスクトップ UI",
         "mvp_outline": (
-            f"Accept input related to {concept_a}, reinterpret it through {concept_b}, and return saved, comparable suggestions."
+            f"{concept_a} に関連する入力を受け取り、{concept_b} の視点で再解釈して提案を返す。"
         ),
-        "differentiator": f"It makes the gap between {concept_a} and {concept_b} explicit and tunable during ideation.",
+        "differentiator": f"{concept_a} と {concept_b} の距離感を可視化・調整できる点が差別化になる。",
         "fun_point": (
-            f"Users can push {concept_a} and {concept_b} closer or farther apart to deliberately change the idea angle."
+            f"{concept_a} と {concept_b} の距離を近づけたり遠ざけたりして、意図的にアイデアの角度を変えられる。"
         ),
-        "risks": "The audience may be too broad, and weak output quality would hurt repeat use.",
+        "risks": "ターゲットが広すぎる可能性があり、出力品質が低いとリピート利用に影響する。",
     }
 
 
