@@ -46,20 +46,20 @@ cd /d "%BACKEND%"
 start "AIC-Backend" cmd /c "uv run uvicorn main:app --port %BACKEND_PORT%"
 
 :: Wait for backend health check
-echo [2/3] Waiting for backend (max 30s)...
+echo [2/3] Waiting for backend (max 3 min, loading AI model on first run)...
 set /a RETRY=0
 :WAIT_LOOP
-timeout /t 2 /nobreak >nul
+timeout /t 3 /nobreak >nul
 curl -s "http://localhost:%BACKEND_PORT%/api/health" 2>nul | findstr "ok" >nul
 if %errorlevel% equ 0 goto BACKEND_READY
 set /a RETRY+=1
-if %RETRY% geq 15 (
+if %RETRY% geq 60 (
     echo [ERROR] Backend startup timed out.
     echo         Check the AIC-Backend window for errors.
     pause
     exit /b 1
 )
-echo        Still waiting... (%RETRY%/15)
+echo        Still loading... (%RETRY%/60)
 goto WAIT_LOOP
 
 :BACKEND_READY

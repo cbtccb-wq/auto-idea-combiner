@@ -15,13 +15,13 @@ def select_combinations(
     for index, concept_a in enumerate(concepts):
         embedding_a = concept_a.get("embedding")
         concept_a_text = str(concept_a.get("concept") or concept_a.get("text") or "").strip()
-        if not concept_a_text or not embedding_a:
+        if not concept_a_text or embedding_a is None:
             continue
 
         for concept_b in concepts[index + 1 :]:
             embedding_b = concept_b.get("embedding")
             concept_b_text = str(concept_b.get("concept") or concept_b.get("text") or "").strip()
-            if not concept_b_text or not embedding_b:
+            if not concept_b_text or embedding_b is None:
                 continue
 
             pair_key = tuple(sorted((concept_a_text, concept_b_text)))

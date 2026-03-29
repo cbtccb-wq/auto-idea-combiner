@@ -4,7 +4,7 @@ import math
 
 
 def compute_distance(emb_a: list[float], emb_b: list[float]) -> float:
-    if not emb_a or not emb_b or len(emb_a) != len(emb_b):
+    if emb_a is None or emb_b is None or len(emb_a) == 0 or len(emb_b) == 0 or len(emb_a) != len(emb_b):
         return 1.0
 
     dot_product = sum(a * b for a, b in zip(emb_a, emb_b, strict=False))

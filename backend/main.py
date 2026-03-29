@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
 import sys
 from collections import Counter
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -51,7 +53,25 @@ logger = logging.getLogger("auto-idea-combiner")
 embedding_generator: EmbeddingGenerator | None = None
 chroma_store: ChromaStore | None = None
 
-app = FastAPI(title="Auto Idea Combiner Backend")
+def _load_all_models() -> None:
+    _get_embedding_generator()
+    extract_keywords("warmup startup text for model initialization")
+    extract_nouns("warmup")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    _get_chroma_store()
+    logger.info("Loading models (first run may take a few minutes)...")
+    await asyncio.to_thread(_load_all_models)
+    logger.info("All models ready.")
+    with Session(engine) as session:
+        _ensure_score_weights(session)
+    yield
+
+
+app = FastAPI(title="Auto Idea Combiner Backend", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:1420", "tauri://localhost"],
@@ -242,13 +262,6 @@ def _gather_text_sources(payload: IngestRequest) -> list[dict]:
     return sources
 
 
-@app.on_event("startup")
-def startup() -> None:
-    create_db_and_tables()
-    _get_chroma_store()
-    with Session(engine) as session:
-        _ensure_score_weights(session)
-
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
@@ -332,7 +345,9 @@ def generate_ideas(
     for concept_a, concept_b, distance_category in candidate_pairs[: payload.n_ideas]:
         concept_a_text = str(concept_a.get("concept") or concept_a.get("text") or "")
         concept_b_text = str(concept_b.get("concept") or concept_b.get("text") or "")
-        distance_value = compute_distance(concept_a.get("embedding") or [], concept_b.get("embedding") or [])
+        _ea = concept_a.get("embedding")
+        _eb = concept_b.get("embedding")
+        distance_value = compute_distance(_ea if _ea is not None else [], _eb if _eb is not None else [])
         prompt = build_idea_generation_prompt(
             concept_a=concept_a_text,
             concept_b=concept_b_text,
@@ -424,11 +439,11 @@ def get_concepts_map(session: Session = Depends(get_session)) -> dict[str, list]
     edges: list[dict] = []
     for index, left in enumerate(concepts):
         left_embedding = embedding_items.get(left.embedding_id, {}).get("embedding")
-        if not left_embedding:
+        if left_embedding is None:
             continue
         for right in concepts[index + 1 :]:
             right_embedding = embedding_items.get(right.embedding_id, {}).get("embedding")
-            if not right_embedding:
+            if right_embedding is None:
                 continue
             distance = compute_distance(left_embedding, right_embedding)
             if distance >= 0.38:
