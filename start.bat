@@ -97,7 +97,7 @@ goto FRONT_WAIT
 
 :FRONT_READY
 echo        Opening browser...
-start "" "http://localhost:%FRONTEND_PORT%"
+powershell -Command "Start-Process 'http://localhost:%FRONTEND_PORT%'"
 
 echo.
 echo  =============================================
