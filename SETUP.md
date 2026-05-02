@@ -2,131 +2,116 @@
 
 ## 前提条件
 
-| ツール | バージョン | 備考 |
+| ツール | バージョン | 補足 |
 |--------|-----------|------|
-| Python | 3.11+ | `uv` 経由を推奨 |
+| Python | 3.11+ | `uv` の利用を推奨 |
 | uv | 最新版 | `pip install uv` |
 | Node.js | 20+ | |
 | pnpm | 8+ | `npm install -g pnpm` |
-| Rust / Cargo | 最新安定版 | Tauri必須: [rustup.rs](https://rustup.rs) |
+| Rust / Cargo | 最新安定版 | Tauri 実行用 |
 
-> **Windows の場合**: [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) も必要です（Tauri用）
+> Windows では [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) も入れておくと安心です。
 
----
-
-## 1. リポジトリのクローン
+## 1. リポジトリを取得
 
 ```bash
 git clone https://github.com/cbtccb-wq/auto-idea-combiner.git
 cd auto-idea-combiner
 ```
 
----
-
-## 2. 環境変数の設定
+## 2. `.env` を作成
 
 ```bash
 cp .env.example .env
 ```
 
-`.env` を開き、使用するLLMのAPIキーを**最低1つ**設定してください:
+最低限、利用する LLM に応じて API キーを設定してください。
 
 ```env
-# 使用するLLMを選択（anthropic / openai / gemini）
 LLM_PROVIDER=anthropic
-
-# 対応するAPIキーを設定
 ANTHROPIC_API_KEY=sk-ant-xxxxx
+
+# 使う場合だけ設定
 # OPENAI_API_KEY=sk-xxxxx
 # GEMINI_API_KEY=xxxxx
 ```
 
----
+`LLM_PROVIDER` は `anthropic` / `openai` / `gemini` / `local` を選べます。  
+`local` を選ぶと外部 LLM を使わず、テンプレートベースで生成します。
 
-## 3. バックエンドのセットアップ
+## 3. Windows では `start.bat` が最短
+
+リポジトリ直下で次を実行すると、バックエンドとフロントエンドをまとめて起動できます。
+
+```bat
+start.bat
+```
+
+起動時のログは次に出力されます。
+
+- `backend.log`
+- `frontend.log`
+
+ブラウザ版は `http://localhost:1420/` で開きます。
+
+## 4. 手動起動する場合
+
+### バックエンド
 
 ```bash
 cd backend
-
-# 依存関係インストール（初回のみ）
 uv sync
-
-# サーバー起動
 uv run uvicorn main:app --port 8765 --reload
 ```
 
-起動確認:
+確認:
+
+```bash
+curl http://localhost:8765/api/health
 ```
-http://localhost:8765/api/health
-# → {"status": "ok"}
-```
 
----
-
-## 4. フロントエンドのセットアップ
-
-別ターミナルで:
+### フロントエンド
 
 ```bash
 cd frontend
-
-# 依存関係インストール（初回のみ）
 pnpm install
-
-# デスクトップアプリとして起動
-pnpm tauri dev
-
-# ブラウザで確認する場合（バックエンド別途起動が必要）
 pnpm dev
-# → http://localhost:1420
 ```
 
----
+Tauri で起動する場合:
 
-## 5. 初回データ投入
-
-1. アプリを起動する
-2. **設定タブ** → ローカルスキャンディレクトリを指定（例: `~/Documents`）
-3. **ホームタブ** → 「アイデアを生成」ボタンをクリック
-
----
-
-## 6. LLMプロバイダーの切り替え
-
-`.env` の `LLM_PROVIDER` を変更して再起動するだけです:
-
-```env
-LLM_PROVIDER=openai   # GPT-4o-mini を使用
-LLM_PROVIDER=gemini   # Gemini 1.5 Flash を使用
-LLM_PROVIDER=anthropic  # Claude Haiku を使用（デフォルト）
+```bash
+pnpm tauri dev
 ```
 
----
+## 5. 初回の使い方
 
-## 7. Embeddingをローカルで使う（APIキー不要）
+1. アプリを開く
+2. `設定` タブで `ローカル走査ディレクトリ` を保存する
+3. `ホーム` タブで `素材を取り込む` を押す
+4. その後に `アイデアを生成` を押す
 
-デフォルト設定ではローカルの`sentence-transformers`モデルを使用します（初回ダウンロードあり）:
+初回は「素材の取り込み」をしないと、生成に必要な概念が足りずエラーになります。
 
-```env
-EMBEDDING_PROVIDER=local
-EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-```
+## 6. 現在の実装で保存される設定
 
-OpenAI Embeddingを使う場合:
-```env
-EMBEDDING_PROVIDER=openai
-OPENAI_API_KEY=sk-xxxxx
-```
+- `LLM プロバイダ`
+- `スコア重み`
+- `ローカル走査ディレクトリ`
 
----
+`Embedding` は現在 `Local` 固定です。
 
-## よくある問題
+## 7. よくある確認ポイント
 
-**`uv sync` でエラーが出る**
-→ Python 3.11+ がインストールされているか確認: `python --version`
+### 起動はしたが生成できない
 
-**Tauri ビルドでエラーが出る**
-→ Rust と C++ Build Tools が入っているか確認: `cargo --version`
+`設定` タブでフォルダを保存したあと、`ホーム` で `素材を取り込む` を実行してください。
 
-**アイデアが生成されない（空のリストが返る）**
-→ `.env` のAPIキーが正しく設定されているか確認。バックエンドログを確認: `uvicorn` のターミナル出力を見てください。
+### API 通信で失敗する
+
+バックエンドの `http://localhost:8765/api/health` が `{"status":"ok"}` を返すか確認してください。
+
+### LLM を切り替えてもエラーになる
+
+対応する API キーが `.env` に入っているか確認してください。  
+キーが無い場合は `local` にするとテンプレート生成で動作確認できます。

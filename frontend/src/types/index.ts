@@ -1,11 +1,15 @@
 export type DetailLevel = "light" | "standard" | "deep";
+export type LlmProvider = "anthropic" | "openai" | "gemini" | "local";
+export type EmbeddingProvider = "local";
 
 export type FeedbackRating =
-  | "interesting"
-  | "okay"
-  | "not_sure"
-  | "more_distant"
-  | "more_practical";
+  | "great"
+  | "ok"
+  | "no"
+  | "closer"
+  | "further"
+  | "practical"
+  | "wilder";
 
 export interface IdeaCard {
   id: string;
@@ -31,23 +35,22 @@ export interface IdeaCard {
   created_at: string;
 }
 
-export interface Feedback {
-  id: string;
-  idea_card_id: string;
-  rating: string;
-  created_at: string;
+export interface ActionResponse {
+  ok: boolean;
 }
 
 export interface ConceptNode {
   id: string;
   label: string;
-  group: string;
+  frequency: number;
+  source: string;
 }
 
 export interface ConceptEdge {
   source: string;
   target: string;
   weight: number;
+  distance: number;
 }
 
 export interface ConceptMap {
@@ -65,9 +68,9 @@ export interface ScoreWeights {
 }
 
 export interface Settings {
-  llm_provider: string;
-  embedding_provider: string;
+  llm_provider: LlmProvider;
+  embedding_provider: EmbeddingProvider;
   score_weights: ScoreWeights;
-  external_api_enabled: boolean;
   local_scan_dirs: string[];
+  external_api_enabled: boolean;
 }

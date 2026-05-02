@@ -3,13 +3,13 @@ import { getConceptMap } from "./api/client";
 import { History } from "./pages/History";
 import { Home } from "./pages/Home";
 import { SettingsPage } from "./pages/SettingsPage";
-import type { ConceptMap } from "./types";
+import type { ConceptEdge, ConceptMap, ConceptNode } from "./types";
 
 type TabId = "home" | "history" | "map" | "settings";
 
 const tabs: Array<{ id: TabId; label: string; subtitle: string }> = [
   { id: "home", label: "ホーム", subtitle: "今日の 3 アイデア" },
-  { id: "history", label: "履歴", subtitle: "過去の候補" },
+  { id: "history", label: "履歴", subtitle: "過去の生成結果" },
   { id: "map", label: "マップ", subtitle: "概念のつながり" },
   { id: "settings", label: "設定", subtitle: "重みとプロバイダ" },
 ];
@@ -31,6 +31,8 @@ export default function App() {
   }, [activeTab]);
 
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
+  const topNodes = [...conceptMap.nodes].sort((left, right) => right.frequency - left.frequency).slice(0, 8);
+  const strongestEdges = [...conceptMap.edges].sort((left, right) => right.weight - left.weight).slice(0, 6);
 
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
@@ -59,7 +61,7 @@ export default function App() {
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="mb-3 text-xs uppercase tracking-[0.34em] text-cyan-300/70">
-                Auto Idea Combiner
+                AUTO IDEA COMBINER
               </p>
               <h1 className="text-3xl font-semibold text-white">
                 発想の距離を調整するアイデアワークベンチ
@@ -114,9 +116,9 @@ export default function App() {
             <section className={activeTab === "map" ? "block space-y-5" : "hidden"}>
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-semibold text-white">概念マップ</h2>
+                  <h2 className="text-2xl font-semibold text-white">マップ</h2>
                   <p className="mt-1 text-sm text-slate-400">
-                    可視化本体は後続工程向けのプレースホルダです。API のノード数だけ先に確認できます。
+                    取り込んだ概念の頻度と近い組み合わせを一覧で確認できます。
                   </p>
                 </div>
 
@@ -129,17 +131,24 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr]">
-                <div className="flex min-h-[360px] items-center justify-center rounded-[2rem] border border-dashed border-cyan-400/20 bg-slate-900/60 p-6">
-                  <div className="max-w-md text-center">
-                    <p className="mb-3 text-xs uppercase tracking-[0.3em] text-cyan-300/70">
-                      Placeholder
-                    </p>
-                    <h3 className="text-xl font-semibold text-white">概念グラフ表示エリア</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-400">
-                      今後ここにネットワーク図を載せます。現状はバックエンドから取得した件数だけ表示します。
-                    </p>
+              <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+                <div className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-5">
+                  <div className="mb-4">
+                    <p className="text-xs uppercase tracking-[0.3em] text-cyan-300/70">Top Concepts</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">頻度の高い概念</h3>
                   </div>
+
+                  {topNodes.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 p-6 text-sm text-slate-400">
+                      まだ概念がありません。ホームで素材を取り込むとここに表示されます。
+                    </p>
+                  ) : (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {topNodes.map((node) => (
+                        <ConceptCard key={node.id} node={node} />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 rounded-[2rem] border border-white/10 bg-slate-900/70 p-5">
@@ -151,6 +160,19 @@ export default function App() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
                     <StatCard label="ノード数" value={String(conceptMap.nodes.length)} />
                     <StatCard label="エッジ数" value={String(conceptMap.edges.length)} />
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <p className="text-sm font-medium text-slate-200">近い組み合わせ</p>
+                    {strongestEdges.length === 0 ? (
+                      <p className="mt-3 text-sm text-slate-400">表示できる組み合わせはまだありません。</p>
+                    ) : (
+                      <div className="mt-3 space-y-3">
+                        {strongestEdges.map((edge) => (
+                          <EdgeRow key={`${edge.source}-${edge.target}`} edge={edge} nodes={conceptMap.nodes} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -178,6 +200,35 @@ function StatCard({ label, value }: StatCardProps) {
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
       <p className="text-sm text-slate-400">{label}</p>
       <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ConceptCard({ node }: { node: ConceptNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+      <p className="text-sm font-semibold text-white">{node.label}</p>
+      <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">Frequency</p>
+      <p className="mt-1 text-sm text-slate-200">{node.frequency}</p>
+      <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-500">Source</p>
+      <p className="mt-1 text-sm text-slate-400">{node.source}</p>
+    </div>
+  );
+}
+
+function EdgeRow({ edge, nodes }: { edge: ConceptEdge; nodes: ConceptNode[] }) {
+  const sourceLabel = nodes.find((node) => node.id === edge.source)?.label ?? edge.source;
+  const targetLabel = nodes.find((node) => node.id === edge.target)?.label ?? edge.target;
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-3 text-sm">
+      <div className="font-medium text-slate-100">
+        {sourceLabel} × {targetLabel}
+      </div>
+      <div className="mt-2 flex gap-4 text-slate-400">
+        <span>近さ: {edge.weight.toFixed(2)}</span>
+        <span>距離: {edge.distance.toFixed(2)}</span>
+      </div>
     </div>
   );
 }

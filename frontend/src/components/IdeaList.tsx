@@ -10,7 +10,7 @@ export function IdeaList({ ideas, onFeedback }: IdeaListProps) {
   if (ideas.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center text-slate-400">
-        まだアイデアがありません。生成ボタンから 3 件の案を作成できます。
+        まだアイデアがありません。まず素材を取り込み、その後に生成ボタンから 3 件の案を作成できます。
       </div>
     );
   }

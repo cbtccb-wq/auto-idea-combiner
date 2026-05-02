@@ -8,6 +8,16 @@ interface IdeaCardProps {
   onFeedback: (id: string, rating: FeedbackRating) => void;
 }
 
+const scoreLabels = {
+  novelty: "新規性",
+  relevance: "関連性",
+  distance: "距離感",
+  feasibility: "実現性",
+  fun: "楽しさ",
+  apiFit: "API適合",
+  total: "総合",
+};
+
 export function IdeaCard({ card, onFeedback }: IdeaCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -28,13 +38,13 @@ export function IdeaCard({ card, onFeedback }: IdeaCardProps) {
       <p className="mb-5 text-sm leading-6 text-slate-300">{card.summary}</p>
 
       <div className="mb-5 flex flex-wrap gap-2">
-        <ScoreBadge label="新規性" value={card.novelty_score} />
-        <ScoreBadge label="関連性" value={card.relevance_score} />
-        <ScoreBadge label="距離感" value={card.distance_score} />
-        <ScoreBadge label="実現性" value={card.feasibility_score} />
-        <ScoreBadge label="楽しさ" value={card.fun_score} />
-        <ScoreBadge label="API適合" value={card.api_fit_score} />
-        <ScoreBadge label="総合" value={card.total_score} />
+        <ScoreBadge label={scoreLabels.novelty} value={card.novelty_score} />
+        <ScoreBadge label={scoreLabels.relevance} value={card.relevance_score} />
+        <ScoreBadge label={scoreLabels.distance} value={card.distance_score} />
+        <ScoreBadge label={scoreLabels.feasibility} value={card.feasibility_score} />
+        <ScoreBadge label={scoreLabels.fun} value={card.fun_score} />
+        <ScoreBadge label={scoreLabels.apiFit} value={card.api_fit_score} />
+        <ScoreBadge label={scoreLabels.total} value={card.total_score} />
       </div>
 
       <div className="mt-auto space-y-4">
@@ -56,11 +66,11 @@ export function IdeaCard({ card, onFeedback }: IdeaCardProps) {
         {expanded ? (
           <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm leading-6 text-slate-300">
             <DetailItem label="なぜ面白いか" value={card.why_interesting} />
-            <DetailItem label="想定ユーザー" value={card.target_user} />
-            <DetailItem label="主要技術" value={card.main_tech} />
+            <DetailItem label="対象ユーザー" value={card.target_user} />
+            <DetailItem label="主な技術" value={card.main_tech} />
             <DetailItem label="MVP" value={card.mvp_outline} />
             <DetailItem label="差別化" value={card.differentiator} />
-            <DetailItem label="遊びポイント" value={card.fun_point} />
+            <DetailItem label="楽しいポイント" value={card.fun_point} />
             <DetailItem label="リスク" value={card.risks} />
           </div>
         ) : null}

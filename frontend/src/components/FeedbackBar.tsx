@@ -5,11 +5,13 @@ interface FeedbackBarProps {
 }
 
 const feedbackOptions: Array<{ label: string; value: FeedbackRating }> = [
-  { label: "面白い", value: "interesting" },
-  { label: "まあまあ", value: "okay" },
-  { label: "うーん", value: "not_sure" },
-  { label: "もっと遠く", value: "more_distant" },
-  { label: "もっと実用的", value: "more_practical" },
+  { label: "かなり良い", value: "great" },
+  { label: "悪くない", value: "ok" },
+  { label: "見送り", value: "no" },
+  { label: "もう少し近く", value: "closer" },
+  { label: "もう少し遠く", value: "further" },
+  { label: "もっと実用的", value: "practical" },
+  { label: "もっと大胆に", value: "wilder" },
 ];
 
 export function FeedbackBar({ onSelect }: FeedbackBarProps) {

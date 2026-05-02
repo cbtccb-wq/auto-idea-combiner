@@ -23,7 +23,7 @@ export function History() {
         ),
       );
     } catch (historyError) {
-      setError(historyError instanceof Error ? historyError.message : "履歴の取得に失敗しました。");
+      setError(historyError instanceof Error ? historyError.message : "履歴の読み込みに失敗しました。");
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +33,11 @@ export function History() {
     try {
       await submitFeedback({ ideaCardId: ideaId, rating });
     } catch (feedbackError) {
-      setError(feedbackError instanceof Error ? feedbackError.message : "フィードバック送信に失敗しました。");
+      setError(
+        feedbackError instanceof Error
+          ? feedbackError.message
+          : "フィードバックの送信に失敗しました。",
+      );
     }
   };
 
@@ -42,7 +46,9 @@ export function History() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-white">履歴</h2>
-          <p className="mt-1 text-sm text-slate-400">これまでに生成したアイデアを一覧できます。</p>
+          <p className="mt-1 text-sm text-slate-400">
+            これまでに生成したアイデアを一覧で確認できます。
+          </p>
         </div>
 
         <button
@@ -50,7 +56,7 @@ export function History() {
           onClick={() => void loadHistory()}
           className="rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:text-white"
         >
-          再読み込み
+          読み直す
         </button>
       </div>
 

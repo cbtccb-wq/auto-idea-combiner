@@ -85,6 +85,17 @@ class ScoreWeights(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=utc_now, index=True)
 
 
+class AppSettings(SQLModel, table=True):
+    __tablename__ = "app_settings"
+
+    id: str = Field(default="default", primary_key=True)
+    llm_provider: str = Field(default="anthropic")
+    embedding_provider: str = Field(default="local")
+    local_scan_dirs_raw: str = Field(default="")
+    external_api_enabled: bool = Field(default=True)
+    updated_at: datetime = Field(default_factory=utc_now, index=True)
+
+
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
